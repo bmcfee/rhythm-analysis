@@ -14,8 +14,8 @@ def analyze_audio(infile):
     FFT_WINDOW   =  2048
     HOP_SIZE     =  256
     MEL_BINS     =  64
-    BEAT_WINDOW  =  64
-    BEAT_CLEAR   =  8
+    BEAT_WINDOW  =  128
+    BEAT_CLEAR   =  16
     
     # Load the audio
     (y, sr) = librosa.load(infile, target_sr=TARGET_SR)
@@ -25,11 +25,14 @@ def analyze_audio(infile):
     S = librosa.melspectrogram(y, sr, window_length=FFT_WINDOW, hop_length=HOP_SIZE, mel_channels=MEL_BINS)
     
     # Generate per-band onsets
-    onsets = numpy.empty( (S.shape[0], S.shape[1]-1) )
+    onsets = numpy.empty( (S.shape[0]+1, S.shape[1]-1) )
     
     for i in range(MEL_BINS):
         onsets[i,:] = librosa.beat.onset_strength(y, sr, window_length=FFT_WINDOW, hop_length=HOP_SIZE, S=S[i:(i+1),:])
         pass
+    
+    # Generate the global onset profile
+    onsets[-1,:] = librosa.beat.onset_strength(y, sr, window_length=FFT_WINDOW, hop_length=HOP_SIZE, S=S)
     
     # Per-band onset correlation
     H = 0.0
@@ -45,9 +48,9 @@ def analyze_audio(infile):
     H = numpy.dot(numpy.diag(1.0/z), H)
     
     figure()
-    subplot(122), imshow(H, origin='lower', aspect='auto', interpolation='none'), axis('tight'), title('Sub-band onset autocorrelation')
-    xlabel('Frame lag')
-    xticks(range(0, BEAT_WINDOW, BEAT_WINDOW / 5), range(BEAT_CLEAR, BEAT_CLEAR + BEAT_WINDOW, BEAT_WINDOW / 5))
+    subplot(122), imshow(H[:-2,:], origin='lower', aspect='auto', interpolation='none', vmin=0), axis('tight'), title('Sub-band onset autocorrelation')
+    xlabel('Frame lag (ms)')
+    xticks(range(0, BEAT_WINDOW + 1, BEAT_WINDOW / 4), numpy.arange(BEAT_CLEAR, BEAT_CLEAR + BEAT_WINDOW + 1, BEAT_WINDOW / 4, dtype=int) * HOP_SIZE * 1000 / TARGET_SR)
     yticks([])
     colorbar(), draw()
     
@@ -59,9 +62,16 @@ def analyze_audio(infile):
     # Normalize entropy by the uniform distribution (upper bound)
     entropy = entropy / numpy.log2(H.shape[1])
     
-    subplot(121), plot(entropy, range(MEL_BINS)), axis([0, 1.0, 0, MEL_BINS-1]), title('Normalized sub-band entropy')
+    subplot(121)
+    plot(entropy[:-1], range(len(entropy)-1))
+    plot([entropy[-1], entropy[-1]], [0, len(entropy)-2], 'r--')
+    axis([0, 1.0, 0, len(entropy)-2])
+    legend(['Sub-band entropy', 'Global entropy'], loc='upper left')
+    title('Onset correlation entropy')
+    
     ylabel('Mel band')
-    xlabel('H')
+    xlabel('H / Hmax')
+    
     suptitle(os.path.basename(infile))
     pass
 
@@ -81,7 +91,11 @@ def analyze_files(path):
 
 # <codecell>
 
-analyze_files('/home/bmcfee/data/CAL500/mp3/*.mp3')
+analyze_files('/home/bmcfee/data/CAL500/mp3/e*.mp3')
+
+# <codecell>
+
+analyze_files('/home/bmcfee/data/CAL500/wav/charles_mingus-mood_indigo.wav')
 
 # <headingcell level=1>
 
@@ -89,5 +103,9 @@ analyze_files('/home/bmcfee/data/CAL500/mp3/*.mp3')
 
 # <codecell>
 
-analyze_files('/home/bmcfee/Desktop/data/rhythm/drums/C*.m4a')
+analyze_files('/home/bmcfee/Desktop/data/rhythm/drums/[ABC]*')
+
+# <codecell>
+
+analyze_files('/home/bmcfee/Desktop/data/rhythm/drums/[DEF]*')
 
