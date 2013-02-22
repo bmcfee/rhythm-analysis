@@ -29,6 +29,8 @@ def getScore( performer1ODF, performer2ODF, **kwargs ):
         smallerSize = performer1ODF.shape[0]
     # Get the correlation
     correlation = np.correlate( performer1ODF, performer2ODF, 'valid' )
+    # Make correlation sum to 1 so that it can be interpreted as a probability distribution
+    correlation /= np.sum( correlation )
     import matplotlib.pyplot as plt
     plt.subplot( 211 )
     plt.plot( performer1ODF )
