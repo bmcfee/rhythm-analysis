@@ -73,11 +73,12 @@ def analyze_files(inpath, outdir):
     def __consumer(in_Q, out_Q):
         while True:
             try:
-                filename    = in_Q.get(True, 1)
+                i           = in_Q.get(True, 1)
+                filename    = files[i]
                 analysis    = audio_onset_correlation(filename)
                 entropy     = entropy_profile(analysis)
                 save_output(outdir, filename, analysis, entropy)
-                out_Q.put(filename)
+                out_Q.put( (i,) )
             except:
                 break
         out_Q.close()
@@ -86,10 +87,8 @@ def analyze_files(inpath, outdir):
     in_Q    = mp.Queue()
     out_Q   = mp.Queue()
 
-    for (i, filename) in enumerate(files):
-        in_Q.put(filename)
-        if i > 16:
-            break
+    for i in range(len(files)):
+        in_Q.put( i )
         pass
 
     for i in range(CORES):
