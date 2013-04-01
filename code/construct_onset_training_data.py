@@ -61,7 +61,7 @@ def audio_to_examples(wavfile, onsetfile, tol=0.02,
 
         S       = librosa.stft(x, n_fft=n_fft, hop_length=hop_length)
 
-        return np.vstack( (get_mag_features(S), get_phase_features(S)) ).T
+        return np.vstack( (get_mag_features(S), get_phase_features(S)) )
     
     def time_to_frames(times):
         """Convert times to frame numbers"""
@@ -69,7 +69,7 @@ def audio_to_examples(wavfile, onsetfile, tol=0.02,
 
     # 1. Get the features from the audio
     X = get_features()
-    n = X.shape[0]
+    n = X.shape[1]
 
     # 2. load the onset times
     onset_times = np.loadtxt(onsetfile)
@@ -83,4 +83,4 @@ def audio_to_examples(wavfile, onsetfile, tol=0.02,
         Y[lb:up] = True
         pass
 
-    return (X, Y)
+    return (X.T, Y)
