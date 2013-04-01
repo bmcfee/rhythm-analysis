@@ -10,7 +10,7 @@ import numpy as np
 import librosa
 
 def audio_to_examples(wavfile, onsetfile, tol=0.02, 
-                      target_sr=22050, n_fft=512, hop_length=64):
+                      target_sr=22050, n_fft=512, hop_length=128):
     """Extract audio features from an input file.
 
     Features per frame:
