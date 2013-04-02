@@ -5,6 +5,11 @@ Construct onset detection data
 CREATED:2013-04-01 17:04:22 by Brian McFee <brm2132@columbia.edu>
 """
 
+import sys
+import os
+import glob
+import cPickle as pickle
+
 import numpy as np
 
 import librosa
@@ -83,4 +88,51 @@ def audio_to_examples(wavfile, onsetfile, tol=0.02,
         Y[lb:up] = True
         pass
 
-    return (X.T, Y)
+    return (X.T.astype(np.float16), Y)
+
+
+def get_data(input_directory):
+
+    wavs = glob.glob('%s/*.wav' % input_directory)
+
+    wavs.sort()
+
+    for wav in wavs:
+        label = '%s.txt' % (os.path.splitext(wav)[0])
+        yield (wav, label)
+
+
+def processFiles(input_directory,  output_pickle):
+    """Crunches data into features
+
+    Arguments:
+        input_directory     --  (string)    path to directory containing data
+        output_pickle       --  (string)    path to store feature/label data
+    """
+
+    X = None
+    Y = None
+
+    for (wav, onset) in get_data(input_directory):
+        
+        print os.path.basename(wav)
+        (_X, _Y) = audio_to_examples(wav, onset)
+
+        if X is None:
+            X = _X
+            Y = _Y
+        else:
+            X = np.vstack( (X, _X) )
+            Y = np.hstack( (Y, _Y) )
+
+        pass
+
+    with open(output_pickle, 'w') as outfile:
+        pickle.dump({'X': X, 'Y': Y}, outfile, protocol=-1)
+
+
+if __name__ == '__main__':
+    indir       = sys.argv[1]
+    outpickle   = sys.argv[2]
+
+    processFiles(sys.argv[1], sys.argv[2])
