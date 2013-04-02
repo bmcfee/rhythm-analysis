@@ -45,8 +45,8 @@ def audio_to_examples(wavfile, onsetfile, tol=0.02,
         logmagspec  = librosa.logamplitude(S)
 
         X0 = np.vstack( (magspec, powspec, logmagspec) )
-        X1 = np.diff(X0, n=1)
-        X2 = np.diff(X0, n=2)
+        X1 = np.diff(X0, axis=1, n=1)
+        X2 = np.diff(X0, axis=1, n=2)
 
         return np.vstack( (X0[:, 2:], X1[:, 1:], X2) )
 
@@ -55,8 +55,8 @@ def audio_to_examples(wavfile, onsetfile, tol=0.02,
 
         P   = np.unwrap(np.angle(S))
         
-        P1  = np.mod(np.diff(P, n=1), np.pi)
-        P2  = np.mod(np.diff(P, n=2), np.pi)
+        P1  = np.mod(np.diff(P, axis=1, n=1), np.pi)
+        P2  = np.mod(np.diff(P, axis=1, n=2), np.pi)
 
         return np.vstack( (P1[:, 1:], P2) )
 
@@ -101,6 +101,12 @@ def get_data(input_directory):
         label = '%s.txt' % (os.path.splitext(wav)[0])
         yield (wav, label)
 
+def filter_data(X, Y, tau=1e-5):
+
+    ind = (X[:,:257]**2).sum(axis=1) > tau
+
+    return X[ind,:], Y[ind]
+
 
 def processFiles(input_directory,  output_pickle):
     """Crunches data into features
@@ -126,6 +132,8 @@ def processFiles(input_directory,  output_pickle):
             Y = np.hstack( (Y, _Y) )
 
         pass
+
+    (X, Y) = filter_data(X, Y)
 
     with open(output_pickle, 'w') as outfile:
         pickle.dump({'X': X, 'Y': Y}, outfile, protocol=-1)
