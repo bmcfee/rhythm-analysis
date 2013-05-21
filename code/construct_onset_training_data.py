@@ -101,7 +101,7 @@ def get_data(input_directory):
         label = '%s.txt' % (os.path.splitext(wav)[0])
         yield (wav, label)
 
-def filter_data(X, Y, tau=1e-5):
+def filter_data(X, Y, tau=1e-3):
 
     ind = (X[:,:257]**2).sum(axis=1) > tau
 
