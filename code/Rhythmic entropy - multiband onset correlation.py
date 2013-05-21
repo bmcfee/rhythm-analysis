@@ -17,6 +17,16 @@ def makeSpec(filename, scale=1.0, hop_size=64):
 
 # <codecell>
 
+def normalize(x):
+    if x.max() == x.min():
+        return x
+    
+    x = x - x.min()
+    x = x / x.max()
+    return x
+
+# <codecell>
+
 def onsetStrength(S):
     # Compute the first difference in time
     onset = numpy.diff(S, n=1, axis=1)
@@ -27,10 +37,7 @@ def onsetStrength(S):
     # Average over mel bands
     onset = numpy.mean(onset, axis=0)
     
-    # Standardize the onset profile to 0-mean, unit variance
-    #onset = scipy.stats.zscore(onset)
-    
-    return onset
+    return normalize(onset)
 
 # <codecell>
 
@@ -216,14 +223,14 @@ def onset_correlate_animate(audio_file, ref, X, window_size, sr=11025, hop_size=
 
 def ocv(songname, W=128, hop=64):
     (S, sr) = makeSpec(songname, hop_size=hop)
-    M = multiband(S, band_size=1, hop_size=1)
+    M = multiband(S, band_size=4, hop_size=1)
     R = onsetStrength(S)
-    onset_correlate_animate(songname, R, M, window_size=W, sr=sr, hop_size=hop, fps=15)
+    onset_correlate_animate(songname, R, M, window_size=W, sr=sr, hop_size=hop, fps=30)
     pass
 
 # <codecell>
 
-ocv('/home/bmcfee/data/CAL500/wav/daft_punk-da_funk.wav', W=128)
+ocv('/home/bmcfee/data/CAL500/wav/daft_punk-da_funk.wav', W=384)
 
 # <codecell>
 
